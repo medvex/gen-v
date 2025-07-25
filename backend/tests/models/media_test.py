@@ -95,3 +95,17 @@ def test_color_distance():
   assert dist_1_to_3 == pytest.approx(dist_3_to_1)
 
   assert color1.distance_to(color3) == pytest.approx(50.0)
+
+
+def test_text_input_from_settings(mock_app_settings):
+  """Tests creating a TextInput instance from an AppSettings object."""
+  text_input = models.TextInput.from_settings(
+      mock_app_settings, text='test_text'
+  )
+  assert text_input.text == 'test_text'
+  assert text_input.font == mock_app_settings.font_uri
+  assert text_input.font_size == mock_app_settings.text_font_size
+  assert text_input.start_time == mock_app_settings.text_start
+  assert text_input.duration == mock_app_settings.text_duration
+  assert text_input.color == mock_app_settings.text_color
+  assert text_input.position == mock_app_settings.text_position

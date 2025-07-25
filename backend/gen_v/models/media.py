@@ -13,10 +13,14 @@
 # limitations under the License.
 
 """Pydantic classes for video editing."""
+from __future__ import annotations
 import math
 import pydantic
-from typing import Self
+from typing import TYPE_CHECKING, Self
 from typing import Tuple
+
+if TYPE_CHECKING:
+    from gen_v import config
 
 
 class VideoInput(pydantic.BaseModel):
@@ -132,6 +136,21 @@ class TextInput(pydantic.BaseModel):
   duration: float | None = None
   start_time: float = 0.0
   position: tuple[str | int, str | int] = ('right', 'top')
+
+  @classmethod
+  def from_settings(
+      cls, settings: config.AppSettings, text: str = 'text_to_display'
+  ) -> Self:
+    """Creates a TextInput instance from an AppSettings object."""
+    return cls(
+        text=text,
+        font=settings.font_uri,
+        font_size=settings.text_font_size,
+        start_time=settings.text_start,
+        duration=settings.text_duration,
+        color=settings.text_color,
+        position=settings.text_position,
+    )
 
 
 class AudioInput(pydantic.BaseModel):
