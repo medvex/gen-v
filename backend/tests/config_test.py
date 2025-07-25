@@ -104,3 +104,44 @@ def test_output_file_prefix_portrait(mock_app_settings):
   settings = mock_app_settings
   settings.video_orientation = 'PORTRAIT'
   assert settings.output_file_prefix == 'video-portrait'
+
+
+def test_logo_uri(mock_app_settings):
+  """Tests the logo_uri computed field."""
+  settings = mock_app_settings
+  expected_uri = (
+      f"gs://{settings.gcp_bucket_name}/{settings.gcs_folder_name}/logos/"
+      f"{settings.logo_file_name}"
+  )
+  assert settings.logo_uri == expected_uri
+
+
+def test_sticker_uri(mock_app_settings):
+  """Tests the sticker_uri computed field."""
+  settings = mock_app_settings
+  expected_uri = (
+      f"gs://{settings.gcp_bucket_name}/{settings.gcs_folder_name}/"
+      f"input-overlays/{settings.sticker_file_name}"
+  )
+  assert settings.sticker_uri == expected_uri
+
+
+def test_font_uri(mock_app_settings):
+  """Tests the font_uri computed field."""
+  settings = mock_app_settings
+  expected_uri = (
+      f"gs://{settings.gcp_bucket_name}/{settings.gcs_folder_name}/fonts/"
+      f"{settings.font_file_name}"
+  )
+  assert settings.font_uri == expected_uri
+
+
+def test_background_color(mock_app_settings):
+  """Tests the background_color computed field."""
+  settings = mock_app_settings
+  expected_color = (
+      settings.background_red,
+      settings.background_green,
+      settings.background_blue,
+  )
+  assert settings.background_color.to_tuple() == expected_color

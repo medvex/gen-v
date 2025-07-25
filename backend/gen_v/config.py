@@ -18,10 +18,11 @@ from environment variables or using sensible defaults. It centralizes
 configuration related to Google Cloud Platform resources, storage paths,
 and temporary directories.
 """
-from typing import Literal
+from typing import Literal, Tuple
 import pydantic
 import pydantic_settings
 
+from gen_v import models
 from gen_v import utils
 
 
@@ -48,6 +49,35 @@ class AppSettings(pydantic_settings.BaseSettings):
       prompt_type is 'GEMINI'.
     video_orientation: The desired aspect ratio orientation
       ('LANDSCAPE' or 'PORTRAIT').
+    resized_image_width: The width of the resized image.
+    resized_image_height: The height of the resized image.
+    background_red: The red component of the background color.
+    background_green: The green component of the background color.
+    background_blue: The blue component of the background color.
+    stitching_transition_name: The name of the transition to use for stitching.
+    stitching_transition_duration: The duration of the transition in seconds.
+    stitching_transition_side: The side of the transition.
+    stitching_output_length: The desired length of the output video in seconds.
+    stitching_trim_from: Where to trim the video ("start" or "end").
+    stitching_trim_enabled: Whether to trim the video.
+    logo_file_name: The name of the logo file.
+    sticker_file_name: The name of the sticker file.
+    font_file_name: The name of the font file.
+    logo_position: The position of the logo.
+    logo_desired_height: The desired height of the logo.
+    logo_start: The start time of the logo.
+    logo_duration: The duration of the logo.
+    sticker_position: The position of the sticker.
+    sticker_start: The start time of the sticker.
+    sticker_duration: The duration of the sticker.
+    sticker_desired_height: The desired height of the sticker.
+    text_font_size: The font size of the text.
+    text_start: The start time of the text.
+    text_duration: The duration of the text.
+    text_color: The color of the text.
+    text_position: The position of the text.
+    tmp_dir: The temporary directory.
+    upscale_factor: The factor to upscale the video by.
   """
 
   gcp_project_id: str
@@ -86,6 +116,45 @@ class AppSettings(pydantic_settings.BaseSettings):
   # Video format settings
   video_orientation: Literal["LANDSCAPE", "PORTRAIT"] = "LANDSCAPE"
 
+  # Image editing settings
+  resized_image_width: int = 1280
+  resized_image_height: int = 720
+  background_red: int = 255
+  background_green: int = 224
+  background_blue: int = 77
+
+  # Video stitching settings
+  stitching_transition_name: Literal[
+      "CROSS_FADE", "FADE_IN", "SWIPE", "SLIDE_IN"
+  ] = "SWIPE"
+  stitching_transition_duration: float = 0.5
+  stitching_transition_side: Literal["left", "right", "top", "bottom"] = "left"
+  stitching_output_length: int = 23
+  stitching_trim_from: Literal["start", "end"] = "end"
+  stitching_trim_enabled: bool = True
+
+  # Overlay settings
+  logo_file_name: str = "logo.png"
+  sticker_file_name: str = "sticker.png"
+  font_file_name: str = "font.ttf"
+  logo_position: Tuple[int, int] = (50, 520)
+  logo_desired_height: int = 150
+  logo_start: int = 0
+  logo_duration: int = 5
+  sticker_position: Tuple[int, int] = (50, 50)
+  sticker_start: int = 0
+  sticker_duration: int = 5
+  sticker_desired_height: int = 100
+  text_font_size: int = 30
+  text_start: int = 0
+  text_duration: int = 5
+  text_color: str = "blue"
+  text_position: Tuple[int, int] = (850, 50)
+
+  # Other settings
+  tmp_dir: str = "/content"
+  upscale_factor: int = 2
+
   @pydantic.computed_field(return_type=str)
   @property
   def images_uri(self) -> str:
@@ -106,6 +175,24 @@ class AppSettings(pydantic_settings.BaseSettings):
   def audio_uri(self) -> str:
     """Returns the GCS URI for audio files."""
     return f"{self.gcp_bucket_name}/{self.gcs_folder_name}/audio/"
+
+  @pydantic.computed_field(return_type=str)
+  @property
+  def logo_uri(self) -> str:
+    """Returns the GCS URI for the logo file."""
+    return f"gs://{self.gcp_bucket_name}/{self.gcs_folder_name}/logos/{self.logo_file_name}"
+
+  @pydantic.computed_field(return_type=str)
+  @property
+  def sticker_uri(self) -> str:
+    """Returns the GCS URI for the sticker file."""
+    return f"gs://{self.gcp_bucket_name}/{self.gcs_folder_name}/input-overlays/{self.sticker_file_name}"
+
+  @pydantic.computed_field(return_type=str)
+  @property
+  def font_uri(self) -> str:
+    """Returns the GCS URI for the font file."""
+    return f"gs://{self.gcp_bucket_name}/{self.gcs_folder_name}/fonts/{self.font_file_name}"
 
   @pydantic.computed_field(return_type=str)
   @property
@@ -160,3 +247,11 @@ class AppSettings(pydantic_settings.BaseSettings):
     if self.video_orientation == "PORTRAIT":
       return "video-portrait"
     return "video-landscape"
+
+  @pydantic.computed_field(return_type=models.RGBColor)
+  @property
+  def background_color(self) -> models.RGBColor:
+    """Returns the RGB color for the background."""
+    return models.RGBColor.from_tuple(
+        (self.background_red, self.background_green, self.background_blue)
+    )
